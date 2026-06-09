@@ -20,5 +20,12 @@ namespace OFIS.Spawning
 
             return typeMatches && indexMatches;
         }
+
+        public void ConfigureForDebug(PlayerSpawnPointType type, int targetPlayerIndex, string newDisplayName)
+        {
+            spawnPointType = type;
+            playerIndex = targetPlayerIndex;
+            displayName = string.IsNullOrWhiteSpace(newDisplayName) ? name : newDisplayName;
+        }
     }
 }
