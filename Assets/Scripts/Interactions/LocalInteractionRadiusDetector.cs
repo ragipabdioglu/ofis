@@ -38,10 +38,7 @@ namespace OFIS.Interactions
             if (provider == null)
                 return;
 
-            if (!_activeProviders.Contains(provider))
-                _activeProviders.Add(provider);
-
-            RefreshSelection();
+            RegisterProvider(provider);
         }
 
         private void OnTriggerExit2D(Collider2D other)
@@ -53,6 +50,22 @@ namespace OFIS.Interactions
 
             if (_activeProviders.Contains(provider))
                 _activeProviders.Remove(provider);
+
+            RefreshSelection();
+        }
+
+        public void RegisterProviderForDebug(WorldInteractionCandidateProvider provider)
+        {
+            RegisterProvider(provider);
+        }
+
+        private void RegisterProvider(WorldInteractionCandidateProvider provider)
+        {
+            if (provider == null)
+                return;
+
+            if (!_activeProviders.Contains(provider))
+                _activeProviders.Add(provider);
 
             RefreshSelection();
         }
