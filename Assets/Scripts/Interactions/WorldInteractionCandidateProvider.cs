@@ -42,6 +42,13 @@ namespace OFIS.Interactions
                 isValid);
         }
 
+        public void Configure(WorldInteractionType type, string newDisplayName, bool valid = true)
+        {
+            interactionType = type;
+            displayName = string.IsNullOrWhiteSpace(newDisplayName) ? type.ToString() : newDisplayName;
+            isValid = valid;
+        }
+
         public void SetValid(bool value)
         {
             isValid = value;
