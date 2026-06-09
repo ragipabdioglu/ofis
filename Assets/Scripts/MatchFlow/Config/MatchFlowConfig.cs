@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using OFIS.MatchFlow.States;
+using OFIS.MatchFlow.Timeline;
 using UnityEngine;
 
 namespace OFIS.MatchFlow.Config
@@ -8,7 +9,7 @@ namespace OFIS.MatchFlow.Config
     public sealed class MatchFlowConfig : ScriptableObject
     {
         [Header("Match Duration")]
-        public float totalMatchDurationSeconds = 18f * 60f;
+        public float totalMatchDurationSeconds = MatchTimelineFactory.ProductionTotalDurationSeconds;
 
         [Header("Meeting Warning")]
         public float meetingAnnouncementSeconds = 30f;
@@ -25,61 +26,25 @@ namespace OFIS.MatchFlow.Config
 
         public List<MatchTimelineEntry> BuildDefaultTimeline()
         {
-            return new List<MatchTimelineEntry>
-            {
-                new MatchTimelineEntry
-                {
-                    state = MatchState.OfficePhase1,
-                    startTimeSeconds = 0f,
-                    endTimeSeconds = 4f * 60f
-                },
-                new MatchTimelineEntry
-                {
-                    state = MatchState.Meeting1,
-                    startTimeSeconds = 4f * 60f,
-                    endTimeSeconds = 6f * 60f
-                },
-                new MatchTimelineEntry
-                {
-                    state = MatchState.OfficePhase2,
-                    startTimeSeconds = 6f * 60f,
-                    endTimeSeconds = 10f * 60f
-                },
-                new MatchTimelineEntry
-                {
-                    state = MatchState.Meeting2,
-                    startTimeSeconds = 10f * 60f,
-                    endTimeSeconds = 12f * 60f
-                },
-                new MatchTimelineEntry
-                {
-                    state = MatchState.OfficePhase3,
-                    startTimeSeconds = 12f * 60f,
-                    endTimeSeconds = 16f * 60f
-                },
-                new MatchTimelineEntry
-                {
-                    state = MatchState.FinalMeeting,
-                    startTimeSeconds = 16f * 60f,
-                    endTimeSeconds = 18f * 60f
-                }
-            };
+            return BuildEntries(MatchTimelineFactory.CreateProductionTimeline());
         }
 
         public List<MatchTimelineEntry> BuildFastTestTimeline()
         {
-            var timeline = new List<MatchTimelineEntry>();
+            return new List<MatchTimelineEntry>
+            {
+                CreateEntry(MatchState.OfficePhase1, 0f, fastOfficePhaseSeconds),
+                CreateEntry(MatchState.Meeting1, fastOfficePhaseSeconds, fastOfficePhaseSeconds + fastMeetingSeconds),
+                CreateEntry(MatchState.OfficePhase2, fastOfficePhaseSeconds + fastMeetingSeconds, (fastOfficePhaseSeconds * 2f) + fastMeetingSeconds),
+                CreateEntry(MatchState.Meeting2, (fastOfficePhaseSeconds * 2f) + fastMeetingSeconds, (fastOfficePhaseSeconds * 2f) + (fastMeetingSeconds * 2f)),
+                CreateEntry(MatchState.OfficePhase3, (fastOfficePhaseSeconds * 2f) + (fastMeetingSeconds * 2f), (fastOfficePhaseSeconds * 3f) + (fastMeetingSeconds * 2f)),
+                CreateEntry(MatchState.FinalMeeting, (fastOfficePhaseSeconds * 3f) + (fastMeetingSeconds * 2f), GetFastTestDurationSeconds())
+            };
+        }
 
-            float cursor = 0f;
-
-            AddEntry(timeline, MatchState.OfficePhase1, ref cursor, fastOfficePhaseSeconds);
-            AddEntry(timeline, MatchState.Meeting1, ref cursor, fastMeetingSeconds);
-            AddEntry(timeline, MatchState.OfficePhase2, ref cursor, fastOfficePhaseSeconds);
-            AddEntry(timeline, MatchState.Meeting2, ref cursor, fastMeetingSeconds);
-            AddEntry(timeline, MatchState.OfficePhase3, ref cursor, fastOfficePhaseSeconds);
-            AddEntry(timeline, MatchState.FinalMeeting, ref cursor, fastMeetingSeconds);
-
-            return timeline;
+        public float GetDefaultTimelineDurationSeconds()
+        {
+            return MatchTimelineFactory.CreateProductionTimeline().TotalDurationSeconds;
         }
 
         public float GetFastTestDurationSeconds()
@@ -87,20 +52,36 @@ namespace OFIS.MatchFlow.Config
             return (fastOfficePhaseSeconds * 3f) + (fastMeetingSeconds * 3f);
         }
 
-        private static void AddEntry(
-            List<MatchTimelineEntry> timeline,
-            MatchState state,
-            ref float cursor,
-            float durationSeconds)
+        private static List<MatchTimelineEntry> BuildEntries(MatchTimelineDefinition definition)
         {
-            timeline.Add(new MatchTimelineEntry
+            List<MatchTimelineEntry> entries = new();
+            float cursor = 0f;
+
+            for (int i = 0; i < definition.Segments.Count; i++)
+            {
+                MatchTimelineSegment segment = definition.Segments[i];
+                entries.Add(CreateEntry(segment.State, cursor, cursor + segment.DurationSeconds));
+                cursor += segment.DurationSeconds;
+            }
+
+            return entries;
+        }
+
+        private static MatchTimelineEntry CreateEntry(MatchState state, float startTimeSeconds, float endTimeSeconds)
+        {
+            return new MatchTimelineEntry
             {
                 state = state,
-                startTimeSeconds = cursor,
-                endTimeSeconds = cursor + durationSeconds
-            });
-
-            cursor += durationSeconds;
+                startTimeSeconds = startTimeSeconds,
+                endTimeSeconds = endTimeSeconds
+            };
         }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            totalMatchDurationSeconds = MatchTimelineFactory.ProductionTotalDurationSeconds;
+        }
+#endif
     }
 }
