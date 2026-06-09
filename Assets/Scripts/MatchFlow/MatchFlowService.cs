@@ -16,7 +16,9 @@ namespace OFIS.MatchFlow
         private MatchState _currentState;
         private float _matchTimeSeconds;
         private float _activeMatchDurationSeconds;
+        private float _resolvingElapsedSeconds;
         private bool _isRunning;
+        private bool _isResolving;
         private bool _isFastTest;
 
         private bool _sentThirtySecondWarning;
@@ -26,13 +28,19 @@ namespace OFIS.MatchFlow
         public float MatchTimeSeconds => _matchTimeSeconds;
         public float ActiveMatchDurationSeconds => _activeMatchDurationSeconds;
         public float MatchRemainingSeconds => Mathf.Max(0f, _activeMatchDurationSeconds - _matchTimeSeconds);
+        public float ResolvingElapsedSeconds => _resolvingElapsedSeconds;
+        public float ResolvingRemainingSeconds => _isResolving ? Mathf.Max(0f, _config.resolvingMatchSeconds - _resolvingElapsedSeconds) : 0f;
         public bool IsRunning => _isRunning;
+        public bool IsResolving => _isResolving;
         public bool IsFastTest => _isFastTest;
 
         public float CurrentStateElapsedSeconds
         {
             get
             {
+                if (_currentState == MatchState.ResolvingMatch)
+                    return _resolvingElapsedSeconds;
+
                 var entry = GetCurrentTimelineEntry();
                 return entry == null ? 0f : Mathf.Max(0f, _matchTimeSeconds - entry.startTimeSeconds);
             }
@@ -42,6 +50,9 @@ namespace OFIS.MatchFlow
         {
             get
             {
+                if (_currentState == MatchState.ResolvingMatch)
+                    return ResolvingRemainingSeconds;
+
                 var entry = GetCurrentTimelineEntry();
                 return entry == null ? 0f : Mathf.Max(0f, entry.endTimeSeconds - _matchTimeSeconds);
             }
@@ -57,7 +68,9 @@ namespace OFIS.MatchFlow
 
             _currentState = MatchState.None;
             _matchTimeSeconds = 0f;
+            _resolvingElapsedSeconds = 0f;
             _isRunning = false;
+            _isResolving = false;
             _isFastTest = false;
         }
 
@@ -81,10 +94,11 @@ namespace OFIS.MatchFlow
 
         public void StopMatch()
         {
-            if (!_isRunning && _currentState == MatchState.MatchEnded)
+            if (!_isRunning && !_isResolving && _currentState == MatchState.MatchEnded)
                 return;
 
             _isRunning = false;
+            _isResolving = false;
             SetState(MatchState.MatchEnded);
             PublishTimerTick();
 
@@ -93,6 +107,12 @@ namespace OFIS.MatchFlow
 
         public void Tick(float deltaTime)
         {
+            if (_isResolving)
+            {
+                TickResolving(deltaTime);
+                return;
+            }
+
             if (!_isRunning)
                 return;
 
@@ -101,8 +121,7 @@ namespace OFIS.MatchFlow
             if (_matchTimeSeconds >= _activeMatchDurationSeconds)
             {
                 _matchTimeSeconds = _activeMatchDurationSeconds;
-                SetState(MatchState.ResolvingMatch);
-                _isRunning = false;
+                BeginResolvingMatch();
                 PublishTimerTick();
                 return;
             }
@@ -119,10 +138,29 @@ namespace OFIS.MatchFlow
             PublishTimerTick();
         }
 
+        private void TickResolving(float deltaTime)
+        {
+            _resolvingElapsedSeconds += deltaTime;
+
+            if (_resolvingElapsedSeconds >= _config.resolvingMatchSeconds)
+            {
+                _resolvingElapsedSeconds = _config.resolvingMatchSeconds;
+                _isResolving = false;
+                SetState(MatchState.MatchEnded);
+                PublishTimerTick();
+                Debug.Log("[MatchFlow] Match ended after resolving.");
+                return;
+            }
+
+            PublishTimerTick();
+        }
+
         private void StartInternal()
         {
             _matchTimeSeconds = 0f;
+            _resolvingElapsedSeconds = 0f;
             _isRunning = true;
+            _isResolving = false;
 
             _sentThirtySecondWarning = false;
             _sentTenSecondWarning = false;
@@ -132,6 +170,15 @@ namespace OFIS.MatchFlow
             Debug.Log(_isFastTest
                 ? "[MatchFlow] Fast test match started."
                 : "[MatchFlow] Normal match started.");
+        }
+
+        private void BeginResolvingMatch()
+        {
+            _isRunning = false;
+            _isResolving = true;
+            _resolvingElapsedSeconds = 0f;
+            SetState(MatchState.ResolvingMatch);
+            Debug.Log("[MatchFlow] Match entered resolving state.");
         }
 
         private MatchState GetStateForTime(float matchTimeSeconds)
