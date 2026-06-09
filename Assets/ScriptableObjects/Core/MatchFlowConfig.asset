@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a6008c9507229e40a4bfd25f0c1955d, type: 3}
+  m_Name: MatchFlowConfig
+  m_EditorClassIdentifier: Assembly-CSharp::OFIS.MatchFlow.Config.MatchFlowConfig
+  totalMatchDurationSeconds: 1080
+  meetingAnnouncementSeconds: 30
+  meetingRedWarningSeconds: 10
+  meetingJoinLockLastSeconds: 20
+  roleAssignmentSeconds: 2
+  characterAssignmentSeconds: 2
