@@ -12,6 +12,14 @@ namespace OFIS.Rooms
         Accounting = 50,
         HumanResources = 60,
         Logistics = 70,
-        OfficeSupport = 80
+        OfficeSupport = 80,
+
+        ManagerOffice = 90,
+        SecurityRoom = 100,
+        BreakRoom = 110,
+        StorageRoom = 120,
+        PrintRoom = 130,
+        Kitchen = 140,
+        Reception = 150
     }
 }
