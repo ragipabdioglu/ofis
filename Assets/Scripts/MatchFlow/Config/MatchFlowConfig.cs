@@ -11,6 +11,9 @@ namespace OFIS.MatchFlow.Config
         [Header("Match Duration")]
         public float totalMatchDurationSeconds = MatchTimelineFactory.ProductionTotalDurationSeconds;
 
+        [Header("Match End")]
+        public float resolvingMatchSeconds = 2f;
+
         [Header("Meeting Warning")]
         public float meetingAnnouncementSeconds = 30f;
         public float meetingRedWarningSeconds = 10f;
@@ -81,6 +84,7 @@ namespace OFIS.MatchFlow.Config
         private void OnValidate()
         {
             totalMatchDurationSeconds = MatchTimelineFactory.ProductionTotalDurationSeconds;
+            resolvingMatchSeconds = Mathf.Max(0f, resolvingMatchSeconds);
         }
 #endif
     }
