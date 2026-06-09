@@ -26,5 +26,11 @@ namespace OFIS.Rooms
             if (collider != null && !collider.isTrigger)
                 collider.isTrigger = true;
         }
+
+        public void ConfigureForDebug(OfficeRoomType type, string newDisplayName)
+        {
+            roomType = type;
+            displayName = string.IsNullOrWhiteSpace(newDisplayName) ? type.ToString() : newDisplayName;
+        }
     }
 }
