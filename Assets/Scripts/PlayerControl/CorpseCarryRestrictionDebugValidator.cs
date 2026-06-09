@@ -43,7 +43,7 @@ namespace OFIS.PlayerControl
 
             GameObject corpseObject = new GameObject("CarryRestriction_Test_Corpse");
             CorpsePlaceholder corpse = corpseObject.AddComponent<CorpsePlaceholder>();
-            corpse.ConfigureForDebug("Debug Victim");
+            corpse.Initialize("Debug Victim");
 
             carryState.StartCarrying(corpse);
             return carryState;
