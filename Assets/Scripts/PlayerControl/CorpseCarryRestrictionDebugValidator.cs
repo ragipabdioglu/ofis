@@ -42,6 +42,11 @@ namespace OFIS.PlayerControl
             CorpseCarryState carryState = carrier.AddComponent<CorpseCarryState>();
 
             GameObject corpseObject = new GameObject("CarryRestriction_Test_Corpse");
+
+            CircleCollider2D corpseCollider = corpseObject.AddComponent<CircleCollider2D>();
+            corpseCollider.isTrigger = true;
+            corpseCollider.radius = 0.25f;
+
             CorpsePlaceholder corpse = corpseObject.AddComponent<CorpsePlaceholder>();
             corpse.Initialize("Debug Victim");
 
