@@ -20,7 +20,7 @@ namespace OFIS.Interactions
         [ContextMenu("Build And Validate Interaction Radius")]
         public void BuildAndValidate()
         {
-            GameObject player = new("Interaction_Test_Player");
+            GameObject player = new GameObject("Interaction_Test_Player");
             player.transform.position = Vector3.zero;
 
             CircleCollider2D radiusCollider = player.AddComponent<CircleCollider2D>();
@@ -39,7 +39,7 @@ namespace OFIS.Interactions
             CreateCandidate("Farther Corpse", WorldInteractionType.CorpseInspectOrCarry, new Vector2(1.50f, 0f));
 
             Physics2D.SyncTransforms();
-            SimulateTriggerEnterForAllCandidates();
+            RegisterCandidatesInRadius();
 
             WorldInteractionResolveResult result = _detector.RefreshSelection();
             bool passed = result.HasSelection && result.SelectedCandidate.Type == WorldInteractionType.CorpseInspectOrCarry;
@@ -54,7 +54,7 @@ namespace OFIS.Interactions
 
         private static void CreateCandidate(string displayName, WorldInteractionType type, Vector2 position)
         {
-            GameObject candidate = new($"Interaction_{displayName}");
+            GameObject candidate = new GameObject($"Interaction_{displayName}");
             candidate.transform.position = position;
 
             CircleCollider2D candidateCollider = candidate.AddComponent<CircleCollider2D>();
@@ -66,15 +66,10 @@ namespace OFIS.Interactions
             body.gravityScale = 0f;
 
             WorldInteractionCandidateProvider provider = candidate.AddComponent<WorldInteractionCandidateProvider>();
-
-            // Serialized fields are intentionally configured through reflection-free defaults in this validator by using object names only.
-            // The provider defaults to Task; type-specific validation below relies on manually assigned components in real scenes.
-            // For this automated validator, we add a small runtime bridge component to override the candidate type.
-            RuntimeInteractionProviderConfigurator configurator = candidate.AddComponent<RuntimeInteractionProviderConfigurator>();
-            configurator.Configure(provider, type, displayName);
+            provider.Configure(type, displayName, true);
         }
 
-        private void SimulateTriggerEnterForAllCandidates()
+        private void RegisterCandidatesInRadius()
         {
             WorldInteractionCandidateProvider[] providers = FindObjectsByType<WorldInteractionCandidateProvider>(FindObjectsSortMode.None);
 
@@ -88,13 +83,7 @@ namespace OFIS.Interactions
                 if (distance > radius)
                     continue;
 
-                // Unity physics trigger callbacks may run after the current frame.
-                // For deterministic validation, register through the provider list by moving the player through trigger sync fallback.
-                Collider2D providerCollider = provider.GetComponent<Collider2D>();
-                Collider2D detectorCollider = _detector.GetComponent<Collider2D>();
-
-                if (providerCollider != null && detectorCollider != null && detectorCollider.IsTouching(providerCollider))
-                    providerCollider.SendMessage("OnTriggerEnter2D", detectorCollider, SendMessageOptions.DontRequireReceiver);
+                _detector.RegisterProviderForDebug(provider);
             }
         }
     }
