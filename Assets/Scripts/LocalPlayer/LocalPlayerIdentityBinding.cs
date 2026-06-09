@@ -64,15 +64,20 @@ namespace OFIS.LocalPlayer
             PublicIdentity = entry.PublicIdentity;
             PublicState = entry.PublicState;
             PrivateState = entry.PrivateState;
-            OwnRole = entry.PrivateState.OwnRole;
+            OwnRole = entry.PrivateState != null ? entry.PrivateState.OwnRole : PlayerRole.None;
 
             IsBound = true;
+
+            string department = PublicIdentity == null ? "Unknown" : PublicIdentity.Department.ToString();
+            int knownTargetCount = PrivateState == null || PrivateState.KnownVictimTargets == null
+                ? 0
+                : PrivateState.KnownVictimTargets.Count;
 
             Debug.Log(
                 $"[LocalPlayerBinding] Bound LocalPlayer to {DisplayName}. " +
                 $"Role={OwnRole}, " +
-                $"Department={PublicIdentity.Department}, " +
-                $"KnownTargets={PrivateState.KnownVictimTargets.Count}");
+                $"Department={department}, " +
+                $"KnownTargets={knownTargetCount}");
         }
 
         public string GetDebugSummary()
@@ -80,18 +85,35 @@ namespace OFIS.LocalPlayer
             if (!IsBound)
                 return "LocalPlayer is not bound.";
 
-            string roomText = RoomTracker == null
-                ? "No RoomTracker"
-                : $"{RoomTracker.CurrentRoomType} ({RoomTracker.CurrentRoomDisplayName})";
+            string roomText = GetRoomDebugText();
+            string departmentText = PublicIdentity == null ? "Unknown" : PublicIdentity.Department.ToString();
+            string jobTitleText = PublicIdentity == null || string.IsNullOrWhiteSpace(PublicIdentity.JobTitle)
+                ? "Unknown"
+                : PublicIdentity.JobTitle;
+            int knownTargetCount = PrivateState == null || PrivateState.KnownVictimTargets == null
+                ? 0
+                : PrivateState.KnownVictimTargets.Count;
 
             return
                 $"LocalPlayer Binding\n" +
                 $"Player: {DisplayName}\n" +
                 $"Role: {OwnRole}\n" +
-                $"Department: {PublicIdentity.Department}\n" +
-                $"Job: {PublicIdentity.JobTitle}\n" +
-                $"KnownTargets: {PrivateState.KnownVictimTargets.Count}\n" +
+                $"Department: {departmentText}\n" +
+                $"Job: {jobTitleText}\n" +
+                $"KnownTargets: {knownTargetCount}\n" +
                 $"CurrentRoom: {roomText}";
+        }
+
+        private string GetRoomDebugText()
+        {
+            if (RoomTracker == null)
+                return "No RoomTracker";
+
+            string roomName = string.IsNullOrWhiteSpace(RoomTracker.CurrentRoomDisplayName)
+                ? "Unknown Room"
+                : RoomTracker.CurrentRoomDisplayName;
+
+            return $"{RoomTracker.CurrentRoomType} ({roomName})";
         }
     }
 }
