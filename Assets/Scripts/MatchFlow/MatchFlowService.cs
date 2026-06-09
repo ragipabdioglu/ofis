@@ -53,7 +53,7 @@ namespace OFIS.MatchFlow
             _eventBus = eventBus;
 
             _timeline = _config.BuildDefaultTimeline();
-            _activeMatchDurationSeconds = _config.totalMatchDurationSeconds;
+            _activeMatchDurationSeconds = _config.GetDefaultTimelineDurationSeconds();
 
             _currentState = MatchState.None;
             _matchTimeSeconds = 0f;
@@ -64,7 +64,7 @@ namespace OFIS.MatchFlow
         public void StartNormalMatch()
         {
             _timeline = _config.BuildDefaultTimeline();
-            _activeMatchDurationSeconds = _config.totalMatchDurationSeconds;
+            _activeMatchDurationSeconds = _config.GetDefaultTimelineDurationSeconds();
             _isFastTest = false;
 
             StartInternal();
