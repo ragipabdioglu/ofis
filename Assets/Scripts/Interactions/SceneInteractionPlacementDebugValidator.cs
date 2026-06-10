@@ -5,6 +5,7 @@ namespace OFIS.Interactions
     public sealed class SceneInteractionPlacementDebugValidator : MonoBehaviour
     {
         [SerializeField] private bool validateOnStart = true;
+        [SerializeField] private float debugDetectorRadius = 1.5f;
 
         private void Start()
         {
@@ -26,20 +27,47 @@ namespace OFIS.Interactions
 
             CircleCollider2D detectorCollider = detectorObject.AddComponent<CircleCollider2D>();
             detectorCollider.isTrigger = true;
-            detectorCollider.radius = 1.5f;
+            detectorCollider.radius = debugDetectorRadius;
 
             LocalInteractionRadiusDetector detector = detectorObject.AddComponent<LocalInteractionRadiusDetector>();
 
             WorldInteractionCandidateProvider[] providers = interactionRoot.GetComponentsInChildren<WorldInteractionCandidateProvider>();
-
-            foreach (WorldInteractionCandidateProvider provider in providers)
-                detector.RegisterProviderForDebug(provider);
+            int registeredProviderCount = RegisterProvidersInsideRadius(detector, providers, detectorObject.transform.position, debugDetectorRadius);
 
             WorldInteractionResolveResult result = detector.RefreshSelection();
 
             ValidateProviderCount(providers);
+            ValidateRegisteredProviderCount(registeredProviderCount);
             ValidateSelectionExists(result);
             ValidateHighestPriorityNearServer(result);
+        }
+
+        private static int RegisterProvidersInsideRadius(
+            LocalInteractionRadiusDetector detector,
+            WorldInteractionCandidateProvider[] providers,
+            Vector3 detectorPosition,
+            float radius)
+        {
+            if (detector == null || providers == null)
+                return 0;
+
+            int registeredCount = 0;
+
+            foreach (WorldInteractionCandidateProvider provider in providers)
+            {
+                if (provider == null)
+                    continue;
+
+                float distance = Vector2.Distance(detectorPosition, provider.transform.position);
+
+                if (distance > radius)
+                    continue;
+
+                detector.RegisterProviderForDebug(provider);
+                registeredCount++;
+            }
+
+            return registeredCount;
         }
 
         private static void ValidateProviderCount(WorldInteractionCandidateProvider[] providers)
@@ -50,6 +78,16 @@ namespace OFIS.Interactions
                 Debug.Log($"[SceneInteractionPlacementValidator] PASS ProviderCount: Count={providers.Length}");
             else
                 Debug.LogError($"[SceneInteractionPlacementValidator] FAIL ProviderCount: Count={(providers == null ? 0 : providers.Length)}");
+        }
+
+        private static void ValidateRegisteredProviderCount(int registeredProviderCount)
+        {
+            bool passed = registeredProviderCount >= 2;
+
+            if (passed)
+                Debug.Log($"[SceneInteractionPlacementValidator] PASS RegisteredProviderCount: Count={registeredProviderCount}");
+            else
+                Debug.LogError($"[SceneInteractionPlacementValidator] FAIL RegisteredProviderCount: Count={registeredProviderCount}");
         }
 
         private static void ValidateSelectionExists(WorldInteractionResolveResult result)
