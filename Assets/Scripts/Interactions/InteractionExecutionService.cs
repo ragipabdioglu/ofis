@@ -1,4 +1,5 @@
 using OFIS.Players;
+using OFIS.Sabotage;
 using OFIS.Tasks;
 
 namespace OFIS.Interactions
@@ -7,6 +8,7 @@ namespace OFIS.Interactions
     {
         private readonly InteractionPermissionService _permissionService = new InteractionPermissionService();
         private readonly OfficeTaskCompletionService _taskCompletionService = new OfficeTaskCompletionService();
+        private readonly SabotageRepairService _sabotageRepairService = new SabotageRepairService();
 
         public InteractionExecutionResult Execute(PlayerLifeState lifeState, WorldInteractionResolveResult resolveResult)
         {
@@ -69,6 +71,31 @@ namespace OFIS.Interactions
                 selected.DisplayName,
                 "TaskCompletion",
                 completionResult.Message);
+        }
+
+        public InteractionExecutionResult ExecuteSabotageRepair(
+            PlayerLifeState lifeState,
+            WorldInteractionResolveResult resolveResult,
+            SabotageObjectiveRuntimeState sabotageState)
+        {
+            InteractionPermissionResult permission = _permissionService.Evaluate(lifeState, resolveResult);
+
+            if (!permission.CanInteract)
+                return InteractionExecutionResult.Failed(permission.Reason);
+
+            WorldInteractionCandidate selected = resolveResult.SelectedCandidate;
+
+            if (selected.Type != WorldInteractionType.SabotageRepair)
+                return InteractionExecutionResult.Failed("Selected interaction is not a sabotage repair.");
+
+            SabotageRepairResult repairResult = _sabotageRepairService.Repair(sabotageState);
+
+            return new InteractionExecutionResult(
+                repairResult.Success,
+                selected.Type,
+                selected.DisplayName,
+                "SabotageRepair",
+                repairResult.Message);
         }
 
         private static InteractionExecutionResult Success(WorldInteractionCandidate selected, string actionKey, string message)
