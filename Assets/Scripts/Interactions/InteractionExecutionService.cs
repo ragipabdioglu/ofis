@@ -1,10 +1,12 @@
 using OFIS.Players;
+using OFIS.Tasks;
 
 namespace OFIS.Interactions
 {
     public sealed class InteractionExecutionService
     {
         private readonly InteractionPermissionService _permissionService = new InteractionPermissionService();
+        private readonly OfficeTaskCompletionService _taskCompletionService = new OfficeTaskCompletionService();
 
         public InteractionExecutionResult Execute(PlayerLifeState lifeState, WorldInteractionResolveResult resolveResult)
         {
@@ -41,6 +43,32 @@ namespace OFIS.Interactions
                 default:
                     return InteractionExecutionResult.Failed("Selected interaction type is not executable.");
             }
+        }
+
+        public InteractionExecutionResult ExecuteTask(
+            PlayerLifeState lifeState,
+            WorldInteractionResolveResult resolveResult,
+            OfficeTaskRuntimeState taskState,
+            string playerId)
+        {
+            InteractionPermissionResult permission = _permissionService.Evaluate(lifeState, resolveResult);
+
+            if (!permission.CanInteract)
+                return InteractionExecutionResult.Failed(permission.Reason);
+
+            WorldInteractionCandidate selected = resolveResult.SelectedCandidate;
+
+            if (selected.Type != WorldInteractionType.Task)
+                return InteractionExecutionResult.Failed("Selected interaction is not a task.");
+
+            OfficeTaskCompletionResult completionResult = _taskCompletionService.CompleteTask(taskState, playerId);
+
+            return new InteractionExecutionResult(
+                completionResult.Success,
+                selected.Type,
+                selected.DisplayName,
+                "TaskCompletion",
+                completionResult.Message);
         }
 
         private static InteractionExecutionResult Success(WorldInteractionCandidate selected, string actionKey, string message)
