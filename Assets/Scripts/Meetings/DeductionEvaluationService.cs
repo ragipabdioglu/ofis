@@ -44,7 +44,7 @@ namespace OFIS.Meetings
                     "Vote winner is invalid.");
             }
 
-            bool isKiller = killerPlayerIds != null && killerPlayerIds.Contains(voteResult.WinnerPlayerId);
+            bool isKiller = IsKiller(voteResult.WinnerPlayerId, killerPlayerIds);
 
             if (isKiller)
             {
@@ -66,6 +66,20 @@ namespace OFIS.Meetings
                 voteResult.WinnerVoteCount,
                 new List<string>(),
                 "Wrong accusation.");
+        }
+
+        private static bool IsKiller(string playerId, IReadOnlyCollection<string> killerPlayerIds)
+        {
+            if (string.IsNullOrWhiteSpace(playerId) || killerPlayerIds == null)
+                return false;
+
+            foreach (string killerPlayerId in killerPlayerIds)
+            {
+                if (killerPlayerId == playerId)
+                    return true;
+            }
+
+            return false;
         }
     }
 }
