@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using OFIS.Rooms;
+using OFIS.Sabotage;
 using UnityEngine;
 
 namespace OFIS.Meetings
@@ -55,7 +57,7 @@ namespace OFIS.Meetings
             DeductionResult deductionResult = _deductionEvaluationService.Evaluate(voteResult, BuildKillers("killer_01"));
             MeetingSummaryUiState state = _summaryService.BuildSummary(reports, voteResult, deductionResult);
 
-            bool passed = state.HasReports && state.HasVoteResult && state.HasDeductionResult && state.DeductionSummaryText.Contains("Correct accusation");
+            bool passed = state.HasReports && state.HasVoteResult && state.HasDeductionResult && ContainsText(state.DeductionSummaryText, "Correct accusation");
 
             PushHudState(state);
             LogResult("CorrectAccusationSummary", passed, state);
@@ -75,7 +77,7 @@ namespace OFIS.Meetings
             DeductionResult deductionResult = _deductionEvaluationService.Evaluate(voteResult, BuildKillers("killer_01"));
             MeetingSummaryUiState state = _summaryService.BuildSummary(reports, voteResult, deductionResult);
 
-            bool passed = state.HasReports && state.HasVoteResult && state.HasDeductionResult && state.DeductionSummaryText.Contains("Wrong accusation");
+            bool passed = state.HasReports && state.HasVoteResult && state.HasDeductionResult && ContainsText(state.DeductionSummaryText, "Wrong accusation");
 
             LogResult("WrongAccusationSummary", passed, state);
         }
@@ -93,7 +95,7 @@ namespace OFIS.Meetings
             DeductionResult deductionResult = _deductionEvaluationService.Evaluate(voteResult, BuildKillers("killer_01"));
             MeetingSummaryUiState state = _summaryService.BuildSummary(reports, voteResult, deductionResult);
 
-            bool passed = state.HasReports && state.HasVoteResult && state.HasDeductionResult && state.VoteSummaryText.Contains("tied");
+            bool passed = state.HasReports && state.HasVoteResult && state.HasDeductionResult && ContainsText(state.VoteSummaryText, "tied");
 
             LogResult("TieSummary", passed, state);
         }
@@ -109,14 +111,22 @@ namespace OFIS.Meetings
                     MeetingReportType.Suspicion,
                     $"player_{i + 1}",
                     "killer_01",
-                    Rooms.OfficeRoomType.MeetingRoom,
+                    OfficeRoomType.MeetingRoom,
                     0,
                     0,
-                    Sabotage.SabotageObjectiveState.None,
+                    SabotageObjectiveState.None,
                     "Suspicious behavior."));
             }
 
             return reports;
+        }
+
+        private static bool ContainsText(string source, string expected)
+        {
+            if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(expected))
+                return false;
+
+            return source.IndexOf(expected, System.StringComparison.Ordinal) >= 0;
         }
 
         private static HashSet<string> BuildKillers(params string[] killerIds)
