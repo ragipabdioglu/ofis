@@ -7,6 +7,7 @@ namespace OFIS.Rules
         HideCorpse = 2,
         DoTask = 3,
         ReportFinding = 4,
-        JoinMeeting = 5
+        JoinMeeting = 5,
+        Sabotage = 6
     }
 }

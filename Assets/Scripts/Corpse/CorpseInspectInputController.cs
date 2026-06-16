@@ -1,8 +1,11 @@
 using UnityEngine;
+using OFIS.Core.Ids;
+using OFIS.Rooms;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
+#pragma warning disable 0414
 namespace OFIS.Corpse
 {
     public sealed class CorpseInspectInputController : MonoBehaviour
@@ -10,9 +13,16 @@ namespace OFIS.Corpse
         [Header("References")]
         [SerializeField] private CorpseDetector corpseDetector;
         [SerializeField] private FoundCorpseReportMemory reportMemory;
+        [SerializeField] private CorpseOwnerKnowledgeMemory ownerKnowledgeMemory;
+
+        [Header("Debug Owner Context")]
+        [SerializeField] private string inspectorPlayerId = "local_player";
+        [SerializeField] private OfficeRoomType currentRoom = OfficeRoomType.Unknown;
 
         [Header("Input")]
         [SerializeField] private KeyCode inspectKey = KeyCode.I;
+
+        private readonly CorpseInspectService _inspectService = new CorpseInspectService();
 
         private void Awake()
         {
@@ -21,6 +31,9 @@ namespace OFIS.Corpse
 
             if (reportMemory == null)
                 reportMemory = FindAnyObjectByType<FoundCorpseReportMemory>();
+
+            if (ownerKnowledgeMemory == null)
+                ownerKnowledgeMemory = FindAnyObjectByType<CorpseOwnerKnowledgeMemory>();
         }
 
         private void Update()
@@ -63,10 +76,22 @@ namespace OFIS.Corpse
             }
 
             bool recorded = reportMemory.TryRecordFoundCorpse(corpse);
+            CorpseInspectResult inspectResult = _inspectService.Inspect(
+                new CorpseInspectRequest(
+                    $"inspect_{Time.frameCount}",
+                    new PlayerId(inspectorPlayerId),
+                    corpse,
+                    currentRoom,
+                    Time.time));
 
-            if (recorded)
+            if (inspectResult.Success && ownerKnowledgeMemory != null)
+                ownerKnowledgeMemory.TryRecord(inspectResult.Knowledge);
+
+            if (recorded || inspectResult.Success)
             {
-                Debug.Log($"[CorpseInspect] Accepted: Found corpse. Victim={corpse.VictimName}");
+                Debug.Log(
+                    $"[CorpseInspect] Accepted: Found corpse. " +
+                    $"Victim={corpse.VictimName}, OwnerKnowledge={inspectResult.Success}");
                 return;
             }
 
@@ -74,3 +99,4 @@ namespace OFIS.Corpse
         }
     }
 }
+#pragma warning restore 0414

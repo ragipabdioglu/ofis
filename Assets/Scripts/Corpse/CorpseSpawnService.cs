@@ -10,25 +10,36 @@ namespace OFIS.Corpse
 
         public CorpsePlaceholder SpawnCorpse(string victimName, Vector3 position)
         {
-            GameObject corpseObject;
+            CorpsePlaceholder corpse = CreateCorpsePlaceholder(position);
+            corpse.Initialize(victimName);
 
-            if (corpsePrefab != null)
-            {
-                corpseObject = Instantiate(corpsePrefab, position, Quaternion.identity, corpseParent);
-            }
-            else
-            {
-                corpseObject = CreateRuntimeCorpseObject(position);
-            }
+            Debug.Log($"[CorpseSpawnService] Spawned corpse for {victimName} at {position}");
+
+            return corpse;
+        }
+
+        public CorpsePlaceholder SpawnCorpse(CorpsePublicState publicState)
+        {
+            CorpsePlaceholder corpse = CreateCorpsePlaceholder(publicState.WorldPosition);
+            corpse.Initialize(publicState);
+
+            Debug.Log(
+                $"[CorpseSpawnService] Spawned public corpse. " +
+                $"CorpseId={publicState.CorpseId}, Victim={publicState.VictimDisplayName}, Position={publicState.WorldPosition}");
+
+            return corpse;
+        }
+
+        private CorpsePlaceholder CreateCorpsePlaceholder(Vector3 position)
+        {
+            GameObject corpseObject = corpsePrefab != null
+                ? Instantiate(corpsePrefab, position, Quaternion.identity, corpseParent)
+                : CreateRuntimeCorpseObject(position);
 
             CorpsePlaceholder corpse = corpseObject.GetComponent<CorpsePlaceholder>();
 
             if (corpse == null)
                 corpse = corpseObject.AddComponent<CorpsePlaceholder>();
-
-            corpse.Initialize(victimName);
-
-            Debug.Log($"[CorpseSpawnService] Spawned corpse for {victimName} at {position}");
 
             return corpse;
         }

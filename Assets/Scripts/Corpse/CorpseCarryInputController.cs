@@ -1,8 +1,11 @@
 using UnityEngine;
+using OFIS.Core.Ids;
+using OFIS.Players;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
 
+#pragma warning disable 0414
 namespace OFIS.Corpse
 {
     public sealed class CorpseCarryInputController : MonoBehaviour
@@ -12,6 +15,10 @@ namespace OFIS.Corpse
         [SerializeField] private CorpseCarryEligibilityService carryEligibilityService;
         [SerializeField] private CorpseCarryState carryState;
 
+        [Header("Debug Owner Context")]
+        [SerializeField] private string carrierPlayerId = "local_player";
+        [SerializeField] private PlayerLifeState carrierLifeState = PlayerLifeState.Alive;
+
         [Header("Input")]
         [SerializeField] private KeyCode carryKey = KeyCode.C;
 
@@ -19,6 +26,8 @@ namespace OFIS.Corpse
         [SerializeField] private bool roomAllowsCarry = true;
 
         public bool RoomAllowsCarry => roomAllowsCarry;
+
+        private readonly CorpseDropService _dropService = new CorpseDropService();
 
         private void Awake()
         {
@@ -59,7 +68,17 @@ namespace OFIS.Corpse
 
             if (carryState.IsCarrying)
             {
-                carryState.DropCarriedCorpse();
+                CorpseDropCommandResult dropResult = _dropService.Drop(
+                    new CorpseDropCommandContext(
+                        $"drop_{Time.frameCount}",
+                        new PlayerId(carrierPlayerId),
+                        carrierLifeState,
+                        carryState,
+                        transform.position));
+
+                if (!dropResult.Success)
+                    Debug.Log($"[CorpseCarryInput] Drop blocked: Reason={dropResult.Message}");
+
                 return;
             }
 
@@ -103,3 +122,4 @@ namespace OFIS.Corpse
         }
     }
 }
+#pragma warning restore 0414

@@ -8,11 +8,10 @@ namespace OFIS.Corpse
         [SerializeField] private CorpseDetector corpseDetector;
         [SerializeField] private CorpseCarryState carryState;
         [SerializeField] private CorpseCarryInputController carryInputController;
-        [SerializeField] private CorpseCarryFollowController carryFollowController;
 
         [Header("HUD")]
         [SerializeField] private Vector2 screenPosition = new(1045f, 565f);
-        [SerializeField] private Vector2 boxSize = new(430f, 185f);
+        [SerializeField] private Vector2 boxSize = new(430f, 160f);
 
         private GUIStyle _boxStyle;
         private GUIStyle _labelStyle;
@@ -27,9 +26,6 @@ namespace OFIS.Corpse
 
             if (carryInputController == null)
                 carryInputController = FindAnyObjectByType<CorpseCarryInputController>();
-
-            if (carryFollowController == null)
-                carryFollowController = FindAnyObjectByType<CorpseCarryFollowController>();
         }
 
         private void OnGUI()
@@ -80,12 +76,6 @@ namespace OFIS.Corpse
 
             bool isCarrying = carryState != null && carryState.IsCarrying;
             bool roomAllowsCarry = carryInputController == null || carryInputController.RoomAllowsCarry;
-            bool isFollowing = carryFollowController != null && carryFollowController.IsFollowing;
-            bool hasCarrier = carryFollowController != null && carryFollowController.HasCarrier;
-
-            string followOffset = carryFollowController == null
-                ? "Missing"
-                : carryFollowController.CarryOffset.ToString("F2");
 
             return
                 "Corpse Carry Debug\n" +
@@ -93,9 +83,6 @@ namespace OFIS.Corpse
                 $"IsCarrying: {isCarrying}\n" +
                 $"CarriedCorpse: {carriedCorpse}\n" +
                 $"RoomAllowsCarry: {roomAllowsCarry}\n" +
-                $"FollowActive: {isFollowing}\n" +
-                $"HasCarrier: {hasCarrier}\n" +
-                $"CarryOffset: {followOffset}\n" +
                 "Input: C";
         }
 

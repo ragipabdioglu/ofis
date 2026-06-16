@@ -17,14 +17,17 @@ namespace OFIS.Corpse
             Debug.Log($"[CorpseCarryState] Started carrying corpse. Victim={corpse.VictimName}");
         }
 
-        public void DropCarriedCorpse()
+        public CorpsePlaceholder DropCarriedCorpse()
         {
             if (CarriedCorpse == null)
-                return;
+                return null;
 
-            Debug.Log($"[CorpseCarryState] Dropped corpse. Victim={CarriedCorpse.VictimName}");
+            CorpsePlaceholder droppedCorpse = CarriedCorpse;
+
+            Debug.Log($"[CorpseCarryState] Dropped corpse. Victim={droppedCorpse.VictimName}");
 
             CarriedCorpse = null;
+            return droppedCorpse;
         }
     }
 }
